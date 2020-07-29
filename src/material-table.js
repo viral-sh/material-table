@@ -642,6 +642,16 @@ export default class MaterialTable extends React.Component {
     this.setState(this.dataManager.getRenderState());
   };
 
+  onCellEditStarted = (rowData, columnDef) => {
+    this.dataManager.startCellEditable(rowData, columnDef);
+    this.setState(this.dataManager.getRenderState());
+  };
+
+  onCellEditFinished = (rowData, columnDef) => {
+    this.dataManager.finishCellEditable(rowData, columnDef);
+    this.setState(this.dataManager.getRenderState());
+  };
+
   renderFooter() {
     const props = this.getProps();
     if (props.options.paging) {
@@ -815,6 +825,9 @@ export default class MaterialTable extends React.Component {
         }
         hasDetailPanel={!!props.detailPanel}
         treeDataMaxLevel={this.state.treeDataMaxLevel}
+        cellEditable={props.cellEditable}
+        onCellEditStarted={this.onCellEditStarted}
+        onCellEditFinished={this.onCellEditFinished}
       />
     </Table>
   );
@@ -839,7 +852,8 @@ export default class MaterialTable extends React.Component {
       }
     }
 
-    if (props.options.selection) {
+    // add selection action width only for left container div
+    if (props.options.selection && count > 0) {
       const selectionWidth = CommonValues.selectionMaxWidth(
         props,
         this.state.treeDataMaxLevel
@@ -873,6 +887,10 @@ export default class MaterialTable extends React.Component {
         <props.components.Container
           style={{ position: "relative", ...props.style }}
         >
+          {props.options.paginationPosition === "top" ||
+          props.options.paginationPosition === "both"
+            ? this.renderFooter()
+            : null}
           {props.options.toolbar && (
             <props.components.Toolbar
               actions={props.actions}
@@ -1030,7 +1048,10 @@ export default class MaterialTable extends React.Component {
                 </div>
               </div>
             )}
-          {this.renderFooter()}
+          {props.options.paginationPosition === "bottom" ||
+          props.options.paginationPosition === "both"
+            ? this.renderFooter()
+            : null}
 
           {(this.state.isLoading || props.isLoading) &&
             props.options.loadingType === "overlay" && (
@@ -1047,7 +1068,7 @@ export default class MaterialTable extends React.Component {
                 <props.components.OverlayLoading theme={props.theme} />
               </div>
             )}
-          {this.state.errorState && this.state.errorCause === "query" && (
+          {this.state.errorState && this.state.errorState.errorCause === "query" && (
             <div
               style={{
                 position: "absolute",
